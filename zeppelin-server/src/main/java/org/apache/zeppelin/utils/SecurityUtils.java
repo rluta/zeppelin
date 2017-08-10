@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.security.Principal;
 
 import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
@@ -88,7 +89,12 @@ public class SecurityUtils {
 
     String principal;
     if (subject.isAuthenticated()) {
-      principal = subject.getPrincipal().toString();
+      Object subjectPrincipal = subject.getPrincipal();
+      if (subjectPrincipal instanceof Principal) {
+        principal = ((Principal) subjectPrincipal).getName();
+      } else {
+        principal = subjectPrincipal.toString();
+      }
     } else {
       principal = ANONYMOUS;
     }
