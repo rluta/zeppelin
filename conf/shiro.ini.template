@@ -56,6 +56,41 @@ user3 = password4, role2
 #zeppelinHubRealm.zeppelinhubUrl = https://www.zeppelinhub.com
 #securityManager.realms = $zeppelinHubRealm
 
+### A sample OpenidConnect configuration with buji/pac4j
+oidcRealm = io.buji.pac4j.realm.Pac4jRealm
+oidcRealm.principalNameAttribute = name
+config = org.pac4j.core.config.Config
+
+oidcConfig = org.pac4j.oidc.config.OidcConfiguration
+oidcConfig.discoveryURI = https://mykeycloak/auth/realms/myrealm/.well-known/openid-configuration
+oidcConfig.clientId = myClientId
+oidcConfig.secret = mySecret
+oidcConfig.clientAuthenticationMethodAsString = client_secret_basic
+
+requireRoleAdmin = org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer
+requireRoleAdmin.elements = admin
+
+oidcClient = org.pac4j.oidc.client.OidcClient
+oidcClient.configuration = $oidcConfig
+
+clients = org.pac4j.core.client.Clients
+clients.callbackUrl = https://myserver/api/callback
+clients.clients = $oidcClient
+
+config.clients = $clients
+config.authorizers = admin:$requireRoleAdmin
+
+oidcSecurityFilter = io.buji.pac4j.filter.SecurityFilter
+oidcSecurityFilter.config = $config
+oidcSecurityFilter.clients = oidcClient
+
+callbackFilter = io.buji.pac4j.filter.CallbackFilter
+callbackFilter.defaultUrl = /
+callbackFilter.config = $config
+
+pac4jSubjectFactory = io.buji.pac4j.subject.Pac4jSubjectFactory
+securityManager.realms = $oidcRealm
+securityManager.subjectFactory = $pac4jSubjectFactory
 sessionManager = org.apache.shiro.web.session.mgt.DefaultWebSessionManager
 
 ### If caching of user is required then uncomment below lines
@@ -93,3 +128,6 @@ admin = *
 /api/credential/** = authc, roles[admin]
 #/** = anon
 /** = authc
+# For Openid Connect
+# /api/callback = callbackFilter
+# /** = oidcSecurityFilter
